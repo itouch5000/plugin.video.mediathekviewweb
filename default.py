@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
-import pytz
 import xbmcgui
 
 from resources.lib.mediathekviewweb import MediathekViewWeb
@@ -28,7 +27,7 @@ def list_videos(callback, page, query=None, channel=None):
 
     listing = []
     for i in results:
-        dt = datetime.fromtimestamp(i["timestamp"], pytz.timezone('Europe/Berlin'))
+        dt = datetime.fromtimestamp(i["timestamp"])
 
         if QUALITY == 0:  # Hoch
             url = i["url_video_hd"]
