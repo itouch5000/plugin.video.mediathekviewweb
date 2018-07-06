@@ -46,7 +46,7 @@ def list_videos(callback, page, query=None, channel=None):
             'label': u"[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]),
             'info': {'video': {
                 'title': i["title"],
-                'plot': '[B]' + dt.strftime("%d.%m.%Y") + '[/B]\n' + i["description"],
+                'plot': '[B]' + dt.strftime("%d.%m.%Y - %H:%M") + '[/B]\n' + i["description"],
                 'dateadded': dt.strftime("%Y-%m-%d %H:%M:%S"),
                 'date': dt.strftime("%d.%m.%Y"),
                 'aired': dt.strftime("%d.%m.%Y"),
