@@ -35,6 +35,10 @@ msgctxt "#32006"
 msgid "Low"
 msgstr "Niedrig"
 
+msgctxt "#32007"
+msgid "Subtitle"
+msgstr "Untertitel"
+
 
 
 

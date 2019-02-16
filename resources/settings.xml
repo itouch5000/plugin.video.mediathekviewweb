@@ -3,5 +3,6 @@
         <setting id="per_page" label="32001" type="slider" default="20" range="5,5,100" option="int"/>
         <setting id="enable_future" label="32002" type="bool" default="false"/>
         <setting id="quality" type="enum" label="32003" default="0" lvalues="32004|32005|32006" />
+        <setting id="enable_subtitle" label="32007" type="bool" default="false"/>
     </category>
 </settings>

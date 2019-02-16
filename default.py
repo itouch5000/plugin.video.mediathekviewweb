@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import os
 from datetime import datetime
 
 import xbmcgui
 
 from resources.lib.mediathekviewweb import MediathekViewWeb
 from resources.lib.simpleplugin import Plugin, Addon, ListContext
+from resources.lib.subtitles import download_subtitle
+
 
 ListContext.cache_to_disk = True
 plugin = Plugin()
@@ -14,6 +17,7 @@ _ = plugin.initialize_gettext()
 PER_PAGE = plugin.get_setting("per_page")
 FUTURE = plugin.get_setting("enable_future")
 QUALITY = plugin.get_setting("quality")
+SUBTITLE = plugin.get_setting("enable_subtitle")
 
 
 def list_videos(callback, page, query=None, channel=None):
@@ -55,7 +59,7 @@ def list_videos(callback, page, query=None, channel=None):
                 "studio": i["channel"],
             }},
             'is_playable': True,
-            'url': url,
+            'url': plugin.get_url(action='play', url=url, subtitle=i["url_subtitle"])
         })
     if len(results) == PER_PAGE:
         next_page = page + 1
@@ -139,7 +143,15 @@ def search_channel(params):
 
 @plugin.action()
 def play(params):
-    return params.url
+    play_item = {
+        'path': params.url
+    }
+    if SUBTITLE:
+        subtitle_file = os.path.join(addon.config_dir, "subtitle.srt")
+        subtitle_downloaded = download_subtitle(params.subtitle, subtitle_file)
+        if subtitle_downloaded:
+            play_item['subtitles'] = [subtitle_file]
+    return Plugin.resolve_url(params.url, play_item=play_item)
 
 
 if __name__ == '__main__':
