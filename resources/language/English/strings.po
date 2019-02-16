@@ -73,3 +73,11 @@ msgstr ""
 msgctxt "#30017"
 msgid "Search term"
 msgstr ""
+
+msgctxt "#30018"
+msgid "Last queries"
+msgstr ""
+
+msgctxt "#30019"
+msgid "Remove query"
+msgstr ""

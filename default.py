@@ -2,6 +2,7 @@
 import os
 from datetime import datetime
 
+import xbmc
 import xbmcgui
 
 from resources.lib.mediathekviewweb import MediathekViewWeb
@@ -85,14 +86,68 @@ def get_channel():
     return channels[index]
 
 
+def save_query(query, channel=None):
+    with plugin.get_storage() as storage:
+        if 'queries' not in storage:
+            storage['queries'] = []
+        entry = {
+            'query': query,
+            'channel': channel
+        }
+        if entry in storage['queries']:
+            storage['queries'].remove(entry)
+        storage['queries'].insert(0, entry)
+
+
+def load_queries():
+    with plugin.get_storage() as storage:
+        if 'queries' not in storage:
+            storage['queries'] = []
+        return storage['queries']
+
+
 @plugin.action()
 def root(params):
     return [
+        {'label': _("Last queries"), 'url': plugin.get_url(action='last_queries')},
         {'label': _("Search"), 'url': plugin.get_url(action='search_all')},
         {'label': _("Search by channel"), 'url': plugin.get_url(action='search_channel')},
         {'label': _("Browse"), 'url': plugin.get_url(action='browse_all')},
         {'label': _("Browse by channel"), 'url': plugin.get_url(action='browse_channel')},
     ]
+
+
+@plugin.action()
+def last_queries(params):
+    queries = load_queries()
+    listing = []
+    for index, item in enumerate(queries):
+        query = item.get('query')
+        channel = item.get('channel')
+        if channel:
+            label = u"{}: {}".format(channel, query)
+            url = plugin.get_url(action='search_channel', query=query, channel=channel)
+        else:
+            label = query
+            url = plugin.get_url(action='search_all', query=query)
+        listing.append({
+            'label': label,
+            'url': url,
+            'context_menu': [
+                [
+                    _("Remove query"),
+                    'XBMC.RunPlugin({0})'.format(plugin.get_url(action='remove_query', index=index))
+                ]
+            ]
+        })
+    return listing
+
+
+@plugin.action()
+def remove_query(params):
+    with plugin.get_storage() as storage:
+        storage['queries'].pop(int(params.index))
+    xbmc.executebuiltin('Container.Refresh')
 
 
 @plugin.action()
@@ -110,6 +165,7 @@ def search_all(params):
         query = dialog.input(_("Search term"))
     if not query:
         return
+    save_query(query)
     return list_videos("search_all", page, query=query)
 
 
@@ -138,6 +194,7 @@ def search_channel(params):
         query = dialog.input(_("Search term"))
     if not query:
         return
+    save_query(query, channel)
     return list_videos("search_channel", page, query=query, channel=channel)
 
 
