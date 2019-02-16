@@ -7,7 +7,6 @@ import xbmcgui
 
 from resources.lib.mediathekviewweb import MediathekViewWeb
 from resources.lib.simpleplugin import Plugin, Addon, ListContext
-from resources.lib.subtitles import download_subtitle
 
 
 ListContext.cache_to_disk = True
@@ -19,6 +18,10 @@ PER_PAGE = plugin.get_setting("per_page")
 FUTURE = plugin.get_setting("enable_future")
 QUALITY = plugin.get_setting("quality")
 SUBTITLE = plugin.get_setting("enable_subtitle")
+
+
+if SUBTITLE:
+    from resources.lib.subtitles import download_subtitle
 
 
 def list_videos(callback, page, query=None, channel=None):
