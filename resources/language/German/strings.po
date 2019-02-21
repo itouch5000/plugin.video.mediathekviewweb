@@ -81,3 +81,11 @@ msgstr "Letzte Suchanfragen"
 msgctxt "#30019"
 msgid "Remove query"
 msgstr "Suchanfrage löschen"
+
+msgctxt "#30020"
+msgid "Today"
+msgstr "Heute"
+
+msgctxt "#30021"
+msgid "Yesterday"
+msgstr "Gestern"

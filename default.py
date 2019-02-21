@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from datetime import datetime
+import datetime
 
 import xbmc
 import xbmcgui
@@ -44,7 +44,7 @@ def list_videos(callback, page, query=None, channel=None):
 
     listing = []
     for i in results:
-        dt = datetime.fromtimestamp(i["timestamp"], pytz.timezone('Europe/Berlin'))
+        dt = datetime.datetime.fromtimestamp(i["timestamp"], pytz.timezone('Europe/Berlin'))
 
         if QUALITY == 0:  # Hoch
             url = i.get("url_video_hd")
@@ -59,11 +59,19 @@ def list_videos(callback, page, query=None, channel=None):
         else:  # Niedrig
             url = i.get("url_video_low")
 
+        today = datetime.date.today()
+        if dt.date() == today:
+            date = _("Today")
+        elif dt.date() == today + datetime.timedelta(days=-1):
+            date = _("Yesterday")
+        else:
+            date = dt.strftime("%d.%m.%Y")
+
         listing.append({
             'label': u"[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]),
             'info': {'video': {
                 'title': i["title"],
-                'plot': '[B]' + dt.strftime("%d.%m.%Y - %H:%M") + '[/B]\n' + i["description"],
+                'plot': '[B]' + date + ' - ' + dt.strftime("%H:%M") + '[/B]\n' + i["description"],
                 'dateadded': dt.strftime("%Y-%m-%d %H:%M:%S"),
                 'date': dt.strftime("%d.%m.%Y"),
                 'aired': dt.strftime("%d.%m.%Y"),

@@ -81,3 +81,11 @@ msgstr ""
 msgctxt "#30019"
 msgid "Remove query"
 msgstr ""
+
+msgctxt "#30020"
+msgid "Today"
+msgstr ""
+
+msgctxt "#30021"
+msgid "Yesterday"
+msgstr ""
