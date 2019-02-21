@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 from datetime import datetime
 
 import xbmc
 import xbmcgui
+import xbmcaddon
 
 from resources.lib.mediathekviewweb import MediathekViewWeb
 from resources.lib.simpleplugin import Plugin, Addon, ListContext
+
+# add pytz module to path
+addon_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')).decode('utf-8')
+module_dir = os.path.join(addon_dir, "resources", "lib", "pytz")
+sys.path.insert(0, module_dir)
+
+import pytz
 
 
 ListContext.cache_to_disk = True
@@ -35,7 +44,7 @@ def list_videos(callback, page, query=None, channel=None):
 
     listing = []
     for i in results:
-        dt = datetime.fromtimestamp(i["timestamp"])
+        dt = datetime.fromtimestamp(i["timestamp"], pytz.timezone('Europe/Berlin'))
 
         if QUALITY == 0:  # Hoch
             url = i.get("url_video_hd")

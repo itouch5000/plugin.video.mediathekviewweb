@@ -9,8 +9,8 @@ import xbmcaddon
 
 # add pycaption module to path
 addon_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')).decode('utf-8')
-pycaption_dir = os.path.join(addon_dir, "resources", "lib", "pycaption")
-sys.path.insert(0, pycaption_dir)
+module_dir = os.path.join(addon_dir, "resources", "lib", "pycaption")
+sys.path.insert(0, module_dir)
 
 # we need this fork: https://github.com/lucasheld/pycaption/tree/py27
 from pycaption import SRTWriter, detect_format
