@@ -38,17 +38,17 @@ def list_videos(callback, page, query=None, channel=None):
         dt = datetime.fromtimestamp(i["timestamp"])
 
         if QUALITY == 0:  # Hoch
-            url = i["url_video_hd"]
+            url = i.get("url_video_hd")
             if not url:
-                url = i["url_video"]
+                url = i.get("url_video")
             if not url:
-                url = i["url_video_low"]
+                url = i.get("url_video_low")
         elif QUALITY == 1:  # Mittel
-            url = i["url_video"]
+            url = i.get("url_video")
             if not url:
-                url = i["url_video_low"]
+                url = i.get("url_video_low")
         else:  # Niedrig
-            url = i["url_video_low"]
+            url = i.get("url_video_low")
 
         listing.append({
             'label': u"[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]),
