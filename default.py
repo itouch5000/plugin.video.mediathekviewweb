@@ -145,7 +145,7 @@ def last_queries(params):
         query = item.get('query')
         channel = item.get('channel')
         if channel:
-            label = u"{}: {}".format(channel, query)
+            label = u"{0}: {1}".format(channel, query)
             url = plugin.get_url(action='search_channel', query=query, channel=channel)
         else:
             label = query
