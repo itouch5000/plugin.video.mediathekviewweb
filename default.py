@@ -143,6 +143,9 @@ def last_queries(params):
     listing = []
     for index, item in enumerate(queries):
         query = item.get('query')
+        # fix type for already saved encoded queries
+        if type(query) == str:
+            query = query.decode("utf-8")
         channel = item.get('channel')
         if channel:
             label = u"{0}: {1}".format(channel, query)
@@ -182,7 +185,7 @@ def search_all(params):
     query = params.get("query")
     if not query:
         dialog = xbmcgui.Dialog()
-        query = dialog.input(_("Search term"))
+        query = dialog.input(_("Search term")).decode("utf-8")
     if not query:
         return
     save_query(query)
