@@ -149,10 +149,10 @@ def last_queries(params):
         channel = item.get('channel')
         if channel:
             label = u"{0}: {1}".format(channel, query)
-            url = plugin.get_url(action='search_channel', query=query, channel=channel)
+            url = plugin.get_url(action='search_channel', query=query.encode("utf-8"), channel=channel)
         else:
             label = query
-            url = plugin.get_url(action='search_all', query=query)
+            url = plugin.get_url(action='search_all', query=query.encode("utf-8"))
         listing.append({
             'label': label,
             'url': url,
@@ -185,9 +185,10 @@ def search_all(params):
     query = params.get("query")
     if not query:
         dialog = xbmcgui.Dialog()
-        query = dialog.input(_("Search term")).decode("utf-8")
+        query = dialog.input(_("Search term"))
     if not query:
         return
+    query = query.decode("utf-8")
     save_query(query)
     return list_videos("search_all", page, query=query)
 
