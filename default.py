@@ -6,19 +6,22 @@ import datetime
 import xbmc
 import xbmcgui
 import xbmcaddon
+import xbmcplugin
 
 from resources.lib.mediathekviewweb import MediathekViewWeb
-from resources.lib.simpleplugin import Plugin, Addon, ListContext
+from resources.lib.simpleplugin import Plugin, Addon
 
 # add pytz module to path
-addon_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')).decode('utf-8')
+addon_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path'))
+if type(addon_dir) != str:
+    # python 2
+    addon_dir = addon_dir.decode('utf-8')
 module_dir = os.path.join(addon_dir, "resources", "lib", "pytz")
 sys.path.insert(0, module_dir)
 
 import pytz
 
 
-ListContext.cache_to_disk = True
 plugin = Plugin()
 addon = Addon()
 _ = plugin.initialize_gettext()
@@ -42,9 +45,8 @@ def list_videos(callback, page, query=None, channel=None):
         return
     results = data["result"]["results"]
 
-    listing = []
     for i in results:
-        dt = datetime.datetime.fromtimestamp(i["timestamp"], pytz.timezone('Europe/Berlin'))
+        dt = datetime.datetime.fromtimestamp(i["timestamp"], pytz.timezone("Europe/Berlin"))
 
         if QUALITY == 0:  # Hoch
             url = i.get("url_video_hd")
@@ -67,28 +69,33 @@ def list_videos(callback, page, query=None, channel=None):
         else:
             date = dt.strftime("%d.%m.%Y")
 
-        listing.append({
-            'label': u"[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]),
-            'info': {'video': {
-                'title': i["title"],
-                'plot': '[B]' + date + ' - ' + dt.strftime("%H:%M") + '[/B]\n' + i["description"],
-                'dateadded': dt.strftime("%Y-%m-%d %H:%M:%S"),
-                'date': dt.strftime("%d.%m.%Y"),
-                'aired': dt.strftime("%d.%m.%Y"),
-                'year': dt.year,
-                "duration": i["duration"],
-                "studio": i["channel"],
-            }},
-            'is_playable': True,
-            'url': plugin.get_url(action='play', url=url, subtitle=i["url_subtitle"])
+        li = xbmcgui.ListItem(u"[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]))
+        li.setInfo("video", {
+            "title": i["title"],
+            "plot": "[B]" + date + " - " + dt.strftime("%H:%M") + "[/B]\n" + i["description"],
+            "dateadded": dt.strftime("%Y-%m-%d %H:%M:%S"),
+            "date": dt.strftime("%d.%m.%Y"),
+            "aired": dt.strftime("%d.%m.%Y"),
+            "year": dt.year,
+            "duration": i["duration"],
+            "studio": i["channel"],
         })
+        li.setProperty("isPlayable", "true")
+        xbmcplugin.addDirectoryItem(
+            plugin.handle,
+            plugin.get_url(action="play", url=url, subtitle=i["url_subtitle"]),
+            li,
+            isFolder=False
+        )
     if len(results) == PER_PAGE:
         next_page = page + 1
-        listing.append({
-            'label': '[COLOR blue]{0}[/COLOR]'.format(_("Next page")),
-            'url': plugin.get_url(action=callback, page=next_page, query=query, channel=channel),
-        })
-    return listing
+        xbmcplugin.addDirectoryItem(
+            plugin.handle,
+            plugin.get_url(action=callback, page=next_page, query=query, channel=channel),
+            xbmcgui.ListItem("[COLOR blue]{0}[/COLOR]".format(_("Next page"))),
+            isFolder=True
+        )
+    xbmcplugin.endOfDirectory(plugin.handle, cacheToDisc=True)
 
 
 def get_channel():
@@ -127,25 +134,53 @@ def load_queries():
 
 
 @plugin.action()
-def root(params):
-    return [
-        {'label': _("Last queries"), 'url': plugin.get_url(action='last_queries')},
-        {'label': _("Search"), 'url': plugin.get_url(action='search_all')},
-        {'label': _("Search by channel"), 'url': plugin.get_url(action='search_channel')},
-        {'label': _("Browse"), 'url': plugin.get_url(action='browse_all')},
-        {'label': _("Browse by channel"), 'url': plugin.get_url(action='browse_channel')},
-    ]
+def root():
+    xbmcplugin.addDirectoryItem(
+        plugin.handle,
+        plugin.get_url(action='last_queries'),
+        xbmcgui.ListItem(_("Last queries")),
+        isFolder=True
+    )
+    xbmcplugin.addDirectoryItem(
+        plugin.handle,
+        plugin.get_url(action='search_all'),
+        xbmcgui.ListItem(_("Search")),
+        isFolder=True
+    )
+    xbmcplugin.addDirectoryItem(
+        plugin.handle,
+        plugin.get_url(action='search_channel'),
+        xbmcgui.ListItem(_("Search by channel")),
+        isFolder=True
+    )
+    xbmcplugin.addDirectoryItem(
+        plugin.handle,
+        plugin.get_url(action='browse_all'),
+        xbmcgui.ListItem(_("Browse")),
+        isFolder=True
+    )
+    xbmcplugin.addDirectoryItem(
+        plugin.handle,
+        plugin.get_url(action='browse_channel'),
+        xbmcgui.ListItem(_("Browse by channel")),
+        isFolder=True
+    )
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.action()
-def last_queries(params):
+def last_queries():
     queries = load_queries()
-    listing = []
     for index, item in enumerate(queries):
         query = item.get('query')
-        # fix type for already saved encoded queries
-        if type(query) == str:
-            query = query.decode("utf-8")
+        try:
+            # fix type for already saved encoded queries
+            # python 2
+            if type(query) == str:
+                query = query.decode("utf-8")
+        except AttributeError:
+            # python 3
+            pass
         channel = item.get('channel')
         if channel:
             label = u"{0}: {1}".format(channel, query)
@@ -153,17 +188,20 @@ def last_queries(params):
         else:
             label = query
             url = plugin.get_url(action='search_all', query=query.encode("utf-8"))
-        listing.append({
-            'label': label,
-            'url': url,
-            'context_menu': [
-                [
-                    _("Remove query"),
-                    'XBMC.RunPlugin({0})'.format(plugin.get_url(action='remove_query', index=index))
-                ]
-            ]
-        })
-    return listing
+        li = xbmcgui.ListItem(label)
+        li.addContextMenuItems([
+            (
+                _("Remove query"),
+                'XBMC.RunPlugin({0})'.format(plugin.get_url(action='remove_query', index=index))
+            )
+        ])
+        xbmcplugin.addDirectoryItem(
+            plugin.handle,
+            url,
+            li,
+            isFolder=True
+        )
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.action()
@@ -176,7 +214,7 @@ def remove_query(params):
 @plugin.action()
 def browse_all(params):
     page = int(params.get("page", 1))
-    return list_videos("browse_all", page)
+    list_videos("browse_all", page)
 
 
 @plugin.action()
@@ -188,9 +226,14 @@ def search_all(params):
         query = dialog.input(_("Search term"))
     if not query:
         return
-    query = query.decode("utf-8")
+    try:
+        # python 2
+        query = query.decode("utf-8")
+    except AttributeError:
+        # python 3
+        pass
     save_query(query)
-    return list_videos("search_all", page, query=query)
+    list_videos("search_all", page, query=query)
 
 
 @plugin.action()
@@ -201,7 +244,7 @@ def browse_channel(params):
         channel = get_channel()
     if not channel:
         return
-    return list_videos("browse_channel", page, channel=channel)
+    list_videos("browse_channel", page, channel=channel)
 
 
 @plugin.action()
@@ -219,20 +262,18 @@ def search_channel(params):
     if not query:
         return
     save_query(query, channel)
-    return list_videos("search_channel", page, query=query, channel=channel)
+    list_videos("search_channel", page, query=query, channel=channel)
 
 
 @plugin.action()
 def play(params):
-    play_item = {
-        'path': params.url
-    }
+    li = xbmcgui.ListItem(path=params.url)
     if SUBTITLE:
         subtitle_file = os.path.join(addon.config_dir, "subtitle.srt")
         subtitle_downloaded = download_subtitle(params.subtitle, subtitle_file)
         if subtitle_downloaded:
-            play_item['subtitles'] = [subtitle_file]
-    return Plugin.resolve_url(params.url, play_item=play_item)
+            li.setSubtitles([subtitle_file])
+    xbmcplugin.setResolvedUrl(plugin.handle, True, li)
 
 
 if __name__ == '__main__':
