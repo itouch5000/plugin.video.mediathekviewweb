@@ -8,14 +8,12 @@ import xbmcgui
 import xbmcaddon
 import xbmcplugin
 
+from resources.lib.utils import py2_encode, py2_decode
 from resources.lib.mediathekviewweb import MediathekViewWeb
 from resources.lib.simpleplugin import Plugin, Addon
 
 # add pytz module to path
-addon_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path'))
-if type(addon_dir) != str:
-    # python 2
-    addon_dir = addon_dir.decode('utf-8')
+addon_dir = py2_decode(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')))
 module_dir = os.path.join(addon_dir, "resources", "lib", "pytz")
 sys.path.insert(0, module_dir)
 
@@ -173,21 +171,16 @@ def last_queries():
     queries = load_queries()
     for index, item in enumerate(queries):
         query = item.get('query')
-        try:
-            # fix type for already saved encoded queries
-            # python 2
-            if type(query) == str:
-                query = query.decode("utf-8")
-        except AttributeError:
-            # python 3
-            pass
+        # fix type for already saved encoded queries
+        if type(query) == str:
+            query = py2_decode(query)
         channel = item.get('channel')
         if channel:
             label = u"{0}: {1}".format(channel, query)
-            url = plugin.get_url(action='search_channel', query=query.encode("utf-8"), channel=channel)
+            url = plugin.get_url(action='search_channel', query=py2_encode(query), channel=channel)
         else:
             label = query
-            url = plugin.get_url(action='search_all', query=query.encode("utf-8"))
+            url = plugin.get_url(action='search_all', query=py2_encode(query))
         li = xbmcgui.ListItem(label)
         li.addContextMenuItems([
             (
@@ -224,14 +217,9 @@ def search_all(params):
     if not query:
         dialog = xbmcgui.Dialog()
         query = dialog.input(_("Search term"))
+        query = py2_decode(query)
     if not query:
         return
-    try:
-        # python 2
-        query = query.decode("utf-8")
-    except AttributeError:
-        # python 3
-        pass
     save_query(query)
     list_videos("search_all", page, query=query)
 
@@ -269,7 +257,7 @@ def search_channel(params):
 def play(params):
     li = xbmcgui.ListItem(path=params.url)
     if SUBTITLE:
-        subtitle_file = os.path.join(addon.config_dir, "subtitle.srt")
+        subtitle_file = os.path.join(addon.profile_dir, "subtitle.srt")
         subtitle_downloaded = download_subtitle(params.subtitle, subtitle_file)
         if subtitle_downloaded:
             li.setSubtitles([subtitle_file])
