@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import datetime
 import os
 import sys
@@ -66,7 +68,7 @@ def list_videos(callback, page, query=None, channel=None):
         else:
             date = dt.strftime("%d.%m.%Y")
 
-        li = xbmcgui.ListItem(u"[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]))
+        li = xbmcgui.ListItem("[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]))
         li.setInfo("video", {
             "title": i["title"],
             "plot": "[B]" + date + " - " + dt.strftime("%H:%M") + "[/B]\n" + i["description"],
@@ -96,7 +98,6 @@ def list_videos(callback, page, query=None, channel=None):
 
 
 def get_channel():
-    dialog = xbmcgui.Dialog()
     m = MediathekViewWeb()
     data = m.channels()
     if data["error"]:
@@ -104,6 +105,7 @@ def get_channel():
         dialog.notification(_("Error"), data["error"])
         return
     channels = data["channels"]
+    dialog = xbmcgui.Dialog()
     index = dialog.select(_("Select channel"), channels)
     if index == -1:
         return
@@ -175,11 +177,11 @@ def last_queries():
             query = py2_decode(query)
         channel = item.get('channel')
         if channel:
-            label = u"{0}: {1}".format(channel, query)
-            url = plugin.get_url(action='search_channel', query=py2_encode(query), channel=channel)
+            label = "{0}: {1}".format(channel, query)
+            url = plugin.get_url(action='search_channel', query=query, channel=channel)
         else:
             label = query
-            url = plugin.get_url(action='search_all', query=py2_encode(query))
+            url = plugin.get_url(action='search_all', query=query)
         li = xbmcgui.ListItem(label)
         li.addContextMenuItems([
             (
@@ -246,6 +248,7 @@ def search_channel(params):
     if not query:
         dialog = xbmcgui.Dialog()
         query = dialog.input(_("Search term"))
+        query = py2_decode(query)
     if not query:
         return
     save_query(query, channel)
