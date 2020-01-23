@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
 import requests
-from resources.lib.utils import py2_encode, py2_decode
-
+import sys
 import xbmc
-import xbmcvfs
 import xbmcaddon
+import xbmcvfs
+
+from resources.lib.utils import py2_encode, py2_decode
 
 # add pycaption module to path
 addon_dir = py2_decode(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')))

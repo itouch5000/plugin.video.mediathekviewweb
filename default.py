@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
+import datetime
 import os
 import sys
-import datetime
-
 import xbmc
-import xbmcgui
 import xbmcaddon
+import xbmcgui
 import xbmcplugin
 
-from resources.lib.utils import py2_encode, py2_decode
 from resources.lib.mediathekviewweb import MediathekViewWeb
 from resources.lib.simpleplugin import Plugin, Addon
+from resources.lib.utils import py2_encode, py2_decode
 
 # add pytz module to path
 addon_dir = py2_decode(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')))
