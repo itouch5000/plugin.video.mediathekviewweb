@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.mediathekviewweb" name="MediathekViewWeb" version="1.3.1" provider-name="itouch5000">
+<addon id="plugin.video.mediathekviewweb" name="MediathekViewWeb" version="1.3.2" provider-name="itouch5000">
     <requires>
         <import addon="xbmc.python" version="2.25.0"/>
         <import addon="script.module.future" version="0.17.1"/>
         <import addon="script.module.six" version="1.13.0"/>
         <import addon="script.module.requests" version="2.7.0"/>
         <import addon="script.module.beautifulsoup4" version="4.3.2"/>
+        <import addon="script.module.pydevd-pycharm" optional="true"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="default.py">
         <provides>video</provides>
@@ -17,5 +18,12 @@
         <summary lang="de_DE">Ein MediathekView Client</summary>
 		<description lang="de_DE">MediathekViewWeb ist eine einfache Browser-Oberfläche für den Zugriff auf die Filmliste des MediathekView Projekts.</description>
         <license>GPL 2.0</license>
+        <assets>
+            <icon>resources/media/icon.png</icon>
+            <fanart>resources/media/fanart.png</fanart>
+            <screenshot>resources/media/screenshots/screenshot-01.jpg</screenshot>
+            <screenshot>resources/media/screenshots/screenshot-02.jpg</screenshot>
+            <screenshot>resources/media/screenshots/screenshot-03.jpg</screenshot>
+        </assets>
     </extension>
 </addon>

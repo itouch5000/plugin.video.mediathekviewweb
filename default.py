@@ -34,6 +34,25 @@ SUBTITLE = plugin.get_setting("enable_subtitle")
 if SUBTITLE:
     from resources.lib.subtitles import download_subtitle
 
+# -- ka --
+# for icons and co.
+def artPath(channel):
+    art = channel.lower() + '.png'
+    return os.path.join(addon_dir, 'resources', 'media', art)
+
+#removes duplicates
+def chk_duplicates(url, title, duplicates):
+    try:
+        for j in duplicates:
+            if url.split("//")[1] == j['url'].split("//")[1]:
+                return True
+            elif title in j['title']:
+                return True
+            else:
+                continue
+    except:
+        pass
+#--------------------------------------------------------
 
 def list_videos(callback, page, query=None, channel=None):
     m = MediathekViewWeb(PER_PAGE, FUTURE)
@@ -43,6 +62,8 @@ def list_videos(callback, page, query=None, channel=None):
         dialog.notification(_("Error"), data["err"])
         return
     results = data["result"]["results"]
+
+    no_duplicates = []
 
     for i in results:
         dt = datetime.datetime.fromtimestamp(i["timestamp"], pytz.timezone("Europe/Berlin"))
@@ -60,6 +81,12 @@ def list_videos(callback, page, query=None, channel=None):
         else:  # Niedrig
             url = i.get("url_video_low")
 
+#insert by ka
+        if not chk_duplicates(url, i["title"], no_duplicates) == True:
+            no_duplicates.append({'url': url, 'title': i["title"]})
+        else:
+            continue
+
         today = datetime.date.today()
         if dt.date() == today:
             date = _("Today")
@@ -69,6 +96,10 @@ def list_videos(callback, page, query=None, channel=None):
             date = dt.strftime("%d.%m.%Y")
 
         li = xbmcgui.ListItem("[{0}] {1} - {2}".format(i["channel"], i["topic"], i["title"]))
+
+        li.setArt({'poster': artPath(i["channel"]), 'icon': artPath(i["channel"])})
+        li.setProperty('Fanart_Image', artPath('fanart'))
+
         li.setInfo("video", {
             "title": i["title"],
             "plot": "[B]" + date + " - " + dt.strftime("%H:%M") + "[/B]\n" + i["description"],
@@ -80,20 +111,29 @@ def list_videos(callback, page, query=None, channel=None):
             "studio": i["channel"],
         })
         li.setProperty("isPlayable", "true")
+
         xbmcplugin.addDirectoryItem(
             plugin.handle,
             plugin.get_url(action="play", url=url, subtitle=i["url_subtitle"]),
             li,
             isFolder=False
         )
+
     if len(results) == PER_PAGE:
         next_page = page + 1
+        li = xbmcgui.ListItem("[COLOR blue]{0}[/COLOR]".format(_("Next page")))
+
+        li.setArt({'poster': artPath('next'), 'icon': artPath('next')})
+        li.setProperty('Fanart_Image', artPath('fanart'))
+        li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Next page"))}) #remove cm menu
+
         xbmcplugin.addDirectoryItem(
             plugin.handle,
             plugin.get_url(action=callback, page=next_page, query=query, channel=channel),
-            xbmcgui.ListItem("[COLOR blue]{0}[/COLOR]".format(_("Next page"))),
+            li,
             isFolder=True
         )
+
     xbmcplugin.endOfDirectory(plugin.handle, cacheToDisc=True)
 
 
@@ -134,34 +174,59 @@ def load_queries():
 
 @plugin.action()
 def root():
+    li = xbmcgui.ListItem(_("Last queries"))
+    li.setArt({'poster': artPath('search')})
+    li.setProperty('Fanart_Image', artPath('fanart'))
+    # remove unused cm menu
+    li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Last queries"))})
     xbmcplugin.addDirectoryItem(
         plugin.handle,
         plugin.get_url(action='last_queries'),
-        xbmcgui.ListItem(_("Last queries")),
+        li,
         isFolder=True
     )
+    li = xbmcgui.ListItem(_("Search"))
+    li.setArt({'poster': artPath('search')})
+    li.setProperty('Fanart_Image', artPath('fanart'))
+    # remove unused cm menu
+    li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Search"))})
     xbmcplugin.addDirectoryItem(
         plugin.handle,
         plugin.get_url(action='search_all'),
-        xbmcgui.ListItem(_("Search")),
+        li,
         isFolder=True
     )
+    li = xbmcgui.ListItem(_("Search by channel"))
+    li.setArt({'poster': artPath('search')})
+    li.setProperty('Fanart_Image', artPath('fanart'))
+    # remove unused cm menu
+    li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Search by channel"))})
     xbmcplugin.addDirectoryItem(
         plugin.handle,
         plugin.get_url(action='search_channel'),
-        xbmcgui.ListItem(_("Search by channel")),
+        li,
         isFolder=True
     )
+    li = xbmcgui.ListItem(_("Browse"))
+    li.setArt({'poster': artPath('search')})
+    li.setProperty('Fanart_Image', artPath('fanart'))
+    # remove unused cm menu
+    li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Browse"))})
     xbmcplugin.addDirectoryItem(
         plugin.handle,
         plugin.get_url(action='browse_all'),
-        xbmcgui.ListItem(_("Browse")),
+        li,
         isFolder=True
     )
+    li = xbmcgui.ListItem(_("Browse by channel"))
+    li.setArt({'poster': artPath('search')})
+    li.setProperty('Fanart_Image', artPath('fanart'))
+    # remove unused cm menu
+    li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Browse by channel"))})
     xbmcplugin.addDirectoryItem(
         plugin.handle,
         plugin.get_url(action='browse_channel'),
-        xbmcgui.ListItem(_("Browse by channel")),
+        li,
         isFolder=True
     )
     xbmcplugin.endOfDirectory(plugin.handle)
@@ -183,6 +248,10 @@ def last_queries():
             label = query
             url = plugin.get_url(action='search_all', query=query)
         li = xbmcgui.ListItem(label)
+        li.setArt({'poster': artPath('icon'), 'icon': artPath('icon')})
+        li.setProperty('Fanart_Image', artPath('fanart'))
+        li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Search term"))})  # remove unused cm menu
+
         li.addContextMenuItems([
             (
                 _("Remove query"),
