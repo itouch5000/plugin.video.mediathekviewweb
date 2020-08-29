@@ -52,7 +52,6 @@ def chk_duplicates(url, title, duplicates):
                 continue
     except:
         pass
-#--------------------------------------------------------
 
 def list_videos(callback, page, query=None, channel=None):
     m = MediathekViewWeb(PER_PAGE, FUTURE)
@@ -67,25 +66,31 @@ def list_videos(callback, page, query=None, channel=None):
 
     for i in results:
         dt = datetime.datetime.fromtimestamp(i["timestamp"], pytz.timezone("Europe/Berlin"))
-
+        url = ''
         if QUALITY == 0:  # Hoch
-            url = i.get("url_video_hd")
-            if not url:
-                url = i.get("url_video")
-            if not url:
-                url = i.get("url_video_low")
+            for j in ("url_video_hd", "url_video", "url_video_low"):
+                if i.get(j) == '': 
+                    continue
+                else:
+                    url = i.get(j)
+
         elif QUALITY == 1:  # Mittel
-            url = i.get("url_video")
-            if not url:
-                url = i.get("url_video_low")
+            for j in ("url_video", "url_video_low"):
+                if i.get(j) == '': 
+                    continue
+                else:
+                    url = i.get(j)
+
         else:  # Niedrig
             url = i.get("url_video_low")
 
-#insert by ka
+        if url == '': continue
+
         if not chk_duplicates(url, i["title"], no_duplicates) == True:
             no_duplicates.append({'url': url, 'title': i["title"]})
         else:
             continue
+#--------------------------------------------------------
 
         today = datetime.date.today()
         if dt.date() == today:
