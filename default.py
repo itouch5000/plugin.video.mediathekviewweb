@@ -305,8 +305,11 @@ def browse_channel(params):
     channel = params.get("channel")
     if not channel:
         channel = get_channel()
+
     if not channel:
+        plugin.action('root')
         return
+
     list_videos("browse_channel", page, channel=channel)
 
 
@@ -316,15 +319,21 @@ def search_channel(params):
     channel = params.get("channel")
     if not channel:
         channel = get_channel()
+
     if not channel:
+        plugin.action('root')
         return
+
     query = params.get("query")
     if not query:
         dialog = xbmcgui.Dialog()
         query = dialog.input(_("Search term"))
         query = py2_decode(query)
+
     if not query:
+        plugin.action('root')
         return
+
     save_query(query, channel)
     list_videos("search_channel", page, query=query, channel=channel)
 
