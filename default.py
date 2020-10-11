@@ -43,10 +43,11 @@ def artPath(channel):
 #removes duplicates
 def chk_duplicates(url, title, duplicates):
     try:
+        if 'Audiodeskription' in title: return True
         for j in duplicates:
             if url.split("//")[1] == j['url'].split("//")[1]:
                 return True
-            elif title in j['title']:
+            elif title == j['title']:
                 return True
             else:
                 continue
@@ -73,6 +74,7 @@ def list_videos(callback, page, query=None, channel=None):
                     continue
                 else:
                     url = i.get(j)
+                    break
 
         elif QUALITY == 1:  # Mittel
             for j in ("url_video", "url_video_low"):
@@ -80,7 +82,7 @@ def list_videos(callback, page, query=None, channel=None):
                     continue
                 else:
                     url = i.get(j)
-
+                    break
         else:  # Niedrig
             url = i.get("url_video_low")
 
@@ -190,6 +192,7 @@ def root():
         li,
         isFolder=True
     )
+
     li = xbmcgui.ListItem(_("Search"))
     li.setArt({'poster': artPath('search')})
     li.setProperty('Fanart_Image', artPath('fanart'))
@@ -201,6 +204,7 @@ def root():
         li,
         isFolder=True
     )
+
     li = xbmcgui.ListItem(_("Search by channel"))
     li.setArt({'poster': artPath('search')})
     li.setProperty('Fanart_Image', artPath('fanart'))
@@ -212,6 +216,7 @@ def root():
         li,
         isFolder=True
     )
+
     li = xbmcgui.ListItem(_("Browse"))
     li.setArt({'poster': artPath('search')})
     li.setProperty('Fanart_Image', artPath('fanart'))
@@ -223,6 +228,7 @@ def root():
         li,
         isFolder=True
     )
+
     li = xbmcgui.ListItem(_("Browse by channel"))
     li.setArt({'poster': artPath('search')})
     li.setProperty('Fanart_Image', artPath('fanart'))
@@ -256,7 +262,6 @@ def last_queries():
         li.setArt({'poster': artPath('icon'), 'icon': artPath('icon')})
         li.setProperty('Fanart_Image', artPath('fanart'))
         li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(_("Search term"))})  # remove unused cm menu
-
         li.addContextMenuItems([
             (
                 _("Remove query"),
@@ -269,6 +274,21 @@ def last_queries():
             li,
             isFolder=True
         )
+
+    if len(queries) > 1:
+        label = 'Suchverlauf löschen'
+        li = xbmcgui.ListItem(label)
+        li.setArt({'poster': artPath('tools'), 'icon': artPath('tools')})
+        li.setProperty('Fanart_Image', artPath('fanart'))
+        li.setInfo('video', {'overlay': 4, 'plot': '[COLOR blue]{0}[/COLOR]'.format(label)})
+        url = plugin.get_url(action='remove_all_query')
+        xbmcplugin.addDirectoryItem(
+            plugin.handle,
+            url,
+            li,
+            isFolder=True
+        )
+
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
@@ -278,6 +298,15 @@ def remove_query(params):
         storage['queries'].pop(int(params.index))
     xbmc.executebuiltin('Container.Refresh')
 
+@plugin.action()
+def remove_all_query(params):
+    with plugin.get_storage() as storage:
+        while True:
+            if len(storage['queries']) > 0:
+                storage['queries'].pop()
+            else:
+                break
+    xbmc.executebuiltin('Container.Refresh')
 
 @plugin.action()
 def browse_all(params):
@@ -293,8 +322,11 @@ def search_all(params):
         dialog = xbmcgui.Dialog()
         query = dialog.input(_("Search term"))
         query = py2_decode(query)
+
     if not query:
+        plugin.action('root')
         return
+
     save_query(query)
     list_videos("search_all", page, query=query)
 
@@ -347,7 +379,6 @@ def play(params):
         if subtitle_downloaded:
             li.setSubtitles([subtitle_file])
     xbmcplugin.setResolvedUrl(plugin.handle, True, li)
-
 
 if __name__ == '__main__':
     plugin.run()
