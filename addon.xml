@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.mediathekviewweb" name="MediathekViewWeb" version="1.3.3" provider-name="itouch5000">
+<addon id="plugin.video.mediathekviewweb" name="MediathekViewWeb" version="1.3.5" provider-name="itouch5000 - edit by kasi">
     <requires>
         <import addon="xbmc.python" version="2.25.0"/>
         <import addon="script.module.future" version="0.17.1"/>
