@@ -39,7 +39,9 @@ msgctxt "#32007"
 msgid "Subtitle"
 msgstr "Untertitel"
 
-
+msgctxt "#32008"
+msgid "New search dialog"
+msgstr "Neuer Suchdialog"
 
 
 msgctxt "#32010"
@@ -89,3 +91,7 @@ msgstr "Heute"
 msgctxt "#30021"
 msgid "Yesterday"
 msgstr "Gestern"
+
+msgctxt "#30022"
+msgid "page down key"
+msgstr "PageDown-Taste"

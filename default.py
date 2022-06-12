@@ -29,20 +29,74 @@ PER_PAGE = plugin.get_setting("per_page")
 FUTURE = plugin.get_setting("enable_future")
 QUALITY = plugin.get_setting("quality")
 SUBTITLE = plugin.get_setting("enable_subtitle")
+NEW_SEARCH_DIALOG = plugin.get_setting("new_search_dialog")
 
 
 if SUBTITLE:
     from resources.lib.subtitles import download_subtitle
 
+class SearchDialog(xbmcgui.WindowDialog):
+    channel = None
+    editText = ""
+    page = 1
+    controlEdit = xbmcgui.ControlEdit(0, 0, 0, 0, _("Search term") + ':')
+    controlList = xbmcgui.ControlList(0, 0, 400, 500, 'font14', _space=5)
 
-def list_videos(callback, page, query=None, channel=None):
+    def __init__(self, channel=None):
+        super().__init__()
+        self.channel = channel
+        background = xbmcgui.ControlImage(0, 0, self.getWidth(), self.getHeight(), os.path.join(addon_dir, "resources", "black.png"))
+        self.addControl(background)
+        
+        self.controlEdit.setPosition(10,500);
+        self.controlEdit.setHeight(1000)
+        self.controlEdit.setWidth(390)
+        self.addControl(self.controlEdit)
+        self.setFocus(self.controlEdit)
+        
+        self.controlList.setHeight(1000);
+        self.controlList.setWidth(1000);
+        self.controlList.setPosition(400,10)
+        self.addControl(self.controlList);
+
+    def list_videos(self):
+        self.controlList.reset()
+        if self.editText:
+            ok, items, urls = list_videos_base(self.page, self.editText, self.channel)
+            if items:
+                self.controlList.addItems(items)
+                if len(items) == PER_PAGE:
+                    self.controlList.addItem(xbmcgui.ListItem("[COLOR blue]{0}: {1}[/COLOR]".format(_("Next page"), _("page down key"))))
+    
+    def onAction(self, action: xbmcgui.Action):
+        if action.getId() == xbmcgui.ACTION_PAGE_DOWN:
+            if self.editText != "":
+                self.page += 1
+                self.list_videos()
+        elif action.getId() == xbmcgui.ACTION_NAV_BACK:
+            self.editText = ""
+            self.close()
+        elif action.getId() == xbmcgui.ACTION_CONTEXT_MENU:
+            self.close()
+        else:
+            newEditText = self.controlEdit.getText()
+            if (newEditText != self.editText):
+                self.editText = newEditText
+                self.page = 1
+                self.list_videos()
+        super().onAction(action)  
+
+def list_videos_base(page, query, channel=None):
     m = MediathekViewWeb(PER_PAGE, FUTURE)
     data = m.search(query, channel, page)
     if data["err"]:
         dialog = xbmcgui.Dialog()
         dialog.notification(_("Error"), data["err"])
-        return
+        return False
     results = data["result"]["results"]
+
+    items = []
+    urls = []
 
     for i in results:
         dt = datetime.datetime.fromtimestamp(i["timestamp"], pytz.timezone("Europe/Berlin"))
@@ -80,22 +134,29 @@ def list_videos(callback, page, query=None, channel=None):
             "studio": i["channel"],
         })
         li.setProperty("isPlayable", "true")
-        xbmcplugin.addDirectoryItem(
-            plugin.handle,
-            plugin.get_url(action="play", url=url, subtitle=i["url_subtitle"]),
-            li,
-            isFolder=False
-        )
-    if len(results) == PER_PAGE:
-        next_page = page + 1
-        xbmcplugin.addDirectoryItem(
-            plugin.handle,
-            plugin.get_url(action=callback, page=next_page, query=query, channel=channel),
-            xbmcgui.ListItem("[COLOR blue]{0}[/COLOR]".format(_("Next page"))),
-            isFolder=True
-        )
-    xbmcplugin.endOfDirectory(plugin.handle, cacheToDisc=True)
+        items.append(li)
+        urls.append(plugin.get_url(action="play", url=url, subtitle=i["url_subtitle"]))
+    return True, items, urls        
 
+def list_videos(callback, page, query=None, channel=None):
+    ok, items, urls = list_videos_base(page, query, channel)
+    if ok:
+        for i, li in enumerate(items):
+            xbmcplugin.addDirectoryItem(
+                plugin.handle,
+                urls[i],
+                li,
+                isFolder=False
+            )
+        if len(items) == PER_PAGE:
+            next_page = page + 1
+            xbmcplugin.addDirectoryItem(
+                plugin.handle,
+                plugin.get_url(action=callback, page=next_page, query=query, channel=channel),
+                xbmcgui.ListItem("[COLOR blue]{0}[/COLOR]".format(_("Next page"))),
+                isFolder=True
+            )
+        xbmcplugin.endOfDirectory(plugin.handle, cacheToDisc=True)        
 
 def get_channel():
     m = MediathekViewWeb()
@@ -186,7 +247,7 @@ def last_queries():
         li.addContextMenuItems([
             (
                 _("Remove query"),
-                'XBMC.RunPlugin({0})'.format(plugin.get_url(action='remove_query', index=index))
+                'RunPlugin({0})'.format(plugin.get_url(action='remove_query', index=index))
             )
         ])
         xbmcplugin.addDirectoryItem(
@@ -216,9 +277,15 @@ def search_all(params):
     page = int(params.get("page", 1))
     query = params.get("query")
     if not query:
-        dialog = xbmcgui.Dialog()
-        query = dialog.input(_("Search term"))
-        query = py2_decode(query)
+        if NEW_SEARCH_DIALOG:
+            dialog = SearchDialog()
+            dialog.doModal();
+            query = dialog.editText
+            del dialog
+        else:            
+            dialog = xbmcgui.Dialog()
+            query = dialog.input(_("Search term"))
+            query = py2_decode(query)
     if not query:
         return
     save_query(query)
@@ -246,9 +313,15 @@ def search_channel(params):
         return
     query = params.get("query")
     if not query:
-        dialog = xbmcgui.Dialog()
-        query = dialog.input(_("Search term"))
-        query = py2_decode(query)
+        if NEW_SEARCH_DIALOG:
+            dialog = SearchDialog(channel)
+            dialog.doModal();
+            query = dialog.editText
+            del dialog
+        else:            
+            dialog = xbmcgui.Dialog()
+            query = dialog.input(_("Search term"))
+            query = py2_decode(query)
     if not query:
         return
     save_query(query, channel)
